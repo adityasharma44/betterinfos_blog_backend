@@ -1,87 +1,51 @@
+import cryptoRandomString from "crypto-random-string";
 import multer from "multer";
 import path from "path";
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPaths = {
-      ebooksImage: "uploads/ebooksImage",
-      appEbookImage: "uploads/ebooksImage/appEbookImage",
-      ebooksPdf: "uploads/ebooksPdf",
-      audioFile: "uploads/audioFile",
-      audioImage: "uploads/audioImage",
-      songImage: "uploads/songImage",
-      podcastThumbnail: "uploads/podcastThumbnail",
-      video: "uploads/video",
-      videoThumbnail: "uploads/videoThumbnail",
-      videoAppThumbnail: "uploads/videoThumbnail/videoAppThumbnail",
-      courseAppThumbnail: "uploads/courseThumbnail/courseAppThumbnail",
-      featureImage: "uploads/courseThumbnail/featureImage",
-      homeBanner: "uploads/homeBanner",
-    };
-    const uploadPath =
-      uploadPaths[file.fieldname] ||
-      path.join("uploads", req.params.fileCategory);
-    cb(null, uploadPath);
+  destination: function (req, file, cb) {
+    const { fileCategory } = req.params;
+    if (fileCategory) {
+      const uploadPath = path.join("uploads", fileCategory);
+      cb(null, uploadPath);
+    } else {
+      cb(null, "uploads");
+    }
   },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      cryptoRandomString({ length: 10, type: "alphanumeric" }) +
+        path.extname(file.originalname)
+    );
   },
 });
 
 const fileExtensionFilter = (req, file, cb) => {
-  const allowedMimetypes = [
-    "application/pdf",
-    "video/mp4",
-    "audio/mpeg",
-    "image/png",
-    "image/jpeg",
-    "image/jpg",
-    "image/webp",
-  ];
-  if (allowedMimetypes.includes(file.mimetype)) {
+  if (
+    // file.mimetype === "application/pdf" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/jpg"
+  ) {
     cb(null, true);
   } else {
-    cb(
-      new Error("Only PDF, MP3, JPG, PNG, JPEG, and WebP files are allowed!"),
-      false
-    );
+    cb(new Error("Only .jpg .png .jpeg files are allowed!"), false);
   }
 };
 
 const imgUpload = multer({
-  storage,
+  storage: storage,
   fileFilter: fileExtensionFilter,
-  limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB file size limit
+  limits: {
+    fileSize: 1024 * 1024 * 10, // 10MB file size limit
+  },
 });
+ 
+const uploadFile = imgUpload.fields([
+  { name: "profileImage", maxCount: 1 },
+  { name: "blogImage", maxCount: 1 },
+  // { name: "salesDocs", maxCount: 10 },
+]);
 
-export const uploadFile = (req, res, next) => {
-  const upload = imgUpload.fields([
-    { name: "profilePic", maxCount: 1 },
-    { name: "sliderImages", maxCount: 10 },
-    { name: "dailyThoughts", maxCount: 10 },
-    { name: "ebooksImage", maxCount: 1 },
-    { name: "ebooksPdf", maxCount: 1 },
-    { name: "articleImage", maxCount: 1 },
-    { name: "eventImage", maxCount: 1 },
-    { name: "audioImage", maxCount: 1 },
-    { name: "audioFile", maxCount: 1 },
-    { name: "video", maxCount: 1 },
-    { name: "videoThumbnail", maxCount: 1 },
-    { name: "videoAppThumbnail", maxCount: 1 },
-    { name: "courseThumbnail", maxCount: 1 },
-    { name: "songImage", maxCount: 1 },
-    { name: "suvicharImage", maxCount: 1 },
-    { name: "storyImage", maxCount: 1 },
-    { name: "podcastThumbnail", maxCount: 1 },
-    { name: "liveImage", maxCount: 1 },
-    { name: "appEbookImage", maxCount: 1 },
-    { name: "courseAppThumbnail", maxCount: 1 },
-    { name: "homeBanner", maxCount: 1 },
-    { name: "featureImage", maxCount: 10 },
-  ]);
-  upload(req, res, async (err) => {
-    if (err) return next(err);
-    next();
-  });
-};
+export default uploadFile;

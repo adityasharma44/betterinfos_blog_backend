@@ -133,11 +133,15 @@ export const authController = {
               .json({ success: false, message: "User not found." });
           }
 
-          res.status(200).json({
-            success: true,
-            message: "User verified successfully.",
-            user: existingUser,
-          });
+          if (existingUser) {
+            res.redirect(302, "http://localhost:5173/verification-successfull");
+          }
+
+          // res.status(200).json({
+          //   success: true,
+          //   message: "User verified successfully.",
+          //   user: existingUser,
+          // });
         } catch (error) {
           console.log(error);
           res
@@ -196,9 +200,57 @@ export const authController = {
 
       const token = JwtService.sign(payload, process.env.JWT_SECRET);
 
-      return res.json({ token: token, id: user._id, name: user.name });
+      return res.json({
+        token: token,
+        id: user._id,
+        name: user.name,
+        message: "Login Successful",
+      });
     } catch (error) {
       return next(err);
+    }
+  },
+
+  updateProfile: async (req, res, next) => {
+    const fileImage = req.files?.profileImage?.[0];
+    const { userId, name, email, profileImage } = req.body;
+
+    try {
+      const user = await userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          name,
+          email,
+          profileImage: profileImage || fileImage?.filename,
+        },
+        { new: true }
+      );
+
+      return res.json({
+        message: "Profile Updated Successfully",
+        profile: user,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  getUserProfile: async (req, res, next) => {
+    const { userId } = req.body;
+
+    try {
+      const user = await userModel.findOne({ _id: userId });
+
+      if (user) {
+        return res.json({
+          message: "user profile fetched",
+          profile: user,
+        });
+      } else {
+        return res.status(401).json({ message: "User Doesn't Exist" });
+      }
+    } catch (error) {
+      return next(error);
     }
   },
 };

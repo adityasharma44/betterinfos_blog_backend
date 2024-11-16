@@ -62,6 +62,27 @@ export const commentController = {
     }
   },
 
+  getUserComments: async (req, res, next) => {
+    const { userId } = req.body;
+
+    try {
+      const commentData = await commentModel.find({ userId: userId });
+      if (commentData.length > 0) {
+        return res.status(200).json({
+          status: "success",
+          comments: commentData,
+        });
+      } else {
+        return res.status(404).json({
+          status: "error",
+          message: "No Comment Exists",
+        });
+      }
+    } catch (error) {
+      return next(error);
+    }
+  },
+
   addLike: async (req, res, next) => {
     const likeSchema = Joi.object({
       userId: Joi.string().required(),
@@ -88,7 +109,7 @@ export const commentController = {
         if (unlike) {
           return res
             .status(200)
-            .json({ message: "Unliked successfully", liked: unlike });
+            .json({ message: "Unliked successfully", unliked: unlike });
         }
       } else {
         const like = await likeModel.create({
@@ -108,6 +129,24 @@ export const commentController = {
     }
   },
 
+  countLike: async (req, res, next) => {
+    const { commentId } = req.body;
+
+    try {
+      const likes = await likeModel.find({ commentId });
+      if (likes) {
+        const count = likes.length;
+        return res
+          .status(200)
+          .json({ message: "total Counts", likeCount: count, likes: likes });
+      } else {
+        return res.status(404).json({ message: "no likes" });
+      }
+    } catch (error) {
+      return next(error);
+    }
+  },
+
   deleteComment: async (req, res, next) => {
     const { commentId } = req.body;
 
@@ -116,13 +155,13 @@ export const commentController = {
         _id: commentId,
       });
       if (deletedComment) {
-          return res.status(200).json({
-            message: "Comment Deleted Successfully",
-            deleted: deletedComment,
-          });
-      }else{
+        return res.status(200).json({
+          message: "Comment Deleted Successfully",
+          deleted: deletedComment,
+        });
+      } else {
         return res.status(404).json({
-          message: "Comment not found"
+          message: "Comment not found",
         });
       }
     } catch (error) {

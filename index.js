@@ -6,6 +6,7 @@ import errorHandler from "./middlewares/errorHandler.js";
 import userAuthRoutes from "./routes/auth.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
 import commentRoutes from "./routes/comment.routes.js"
+import contactRoutes from "./routes/contact.routes.js";
 import morgan from "morgan";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -37,6 +38,7 @@ app.use(morgan("dev"));
 app.use("/auth", userAuthRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/comments",commentRoutes)
+app.use("/contact",contactRoutes)
 app.use(errorHandler);
 app.listen(process.env.PORT, () => {
   console.log(`Server Started Succesfully at ${process.env.PORT}`);
