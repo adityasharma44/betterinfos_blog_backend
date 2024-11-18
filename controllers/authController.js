@@ -134,7 +134,7 @@ export const authController = {
           }
 
           if (existingUser) {
-            res.redirect(302, "http://localhost:5173/verification-successfull");
+            res.redirect(302, "https://betterinfos.vercel.app/verification-successfull");
           }
 
           // res.status(200).json({
