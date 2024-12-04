@@ -32,46 +32,51 @@ export const authController = {
     try {
       const existingUser = await userModel.findOne({ email: email });
       if (existingUser) {
-        if (existingUser.verified === false) {
-          const token = JwtService.sign(
-            { _id: existingUser._id },
-            process.env.JWT_SECRET
-          );
+        return res.status(401).json({
+          success: false,
+          message: "Email already Exists Try another One",
+        });
 
-          let mailTransporter = nodemailer.createTransport({
-            service: "gmail",
-            host:"smtp.gmail.com",
-            port:465,
-            secure:true,
-            auth: {
-              user: process.env.USER,
-              pass: process.env.PASS,
-            },
-          });
+        // if (existingUser.verified === false) {
+        //   const token = JwtService.sign(
+        //     { _id: existingUser._id },
+        //     process.env.JWT_SECRET
+        //   );
 
-          let mailDetails = {
-            to: existingUser.email,
-            from: process.env.USER,
-            subject: "Verify your account clicking here !",
-            html: `
-            <h1> Welcome to BetterInfos Blog! </h1>
-            <p> We are happy to have you here </p>
-            <a href="http://localhost:5000/auth/activate/${token}"> Click here to verify your email </a>
-          `,
-          };
+        //   let mailTransporter = nodemailer.createTransport({
+        //     service: "gmail",
+        //     host:"smtp.gmail.com",
+        //     port:465,
+        //     secure:true,
+        //     auth: {
+        //       user: process.env.USER,
+        //       pass: process.env.PASS,
+        //     },
+        //   });
 
-          await mailTransporter.sendMail(mailDetails);
+        //   let mailDetails = {
+        //     to: existingUser.email,
+        //     from: process.env.USER,
+        //     subject: "Verify your account clicking here !",
+        //     html: `
+        //     <h1> Welcome to BetterInfos Blog! </h1>
+        //     <p> We are happy to have you here </p>
+        //     <a href="http://localhost:5000/auth/activate/${token}"> Click here to verify your email </a>
+        //   `,
+        //   };
 
-          return res.status(200).json({
-            success: true,
-            message: "Account activation link has been sent to your account",
-          });
-        } else {
-          return res.status(401).json({
-            success: false,
-            message: "Email is already Exists and Verified!",
-          });
-        }
+        //   await mailTransporter.sendMail(mailDetails);
+
+        //   return res.status(200).json({
+        //     success: true,
+        //     message: "Account activation link has been sent to your account",
+        //   });
+        // } else {
+        //   return res.status(401).json({
+        //     success: false,
+        //     message: "Email is already Exists and Verified!",
+        //   });
+        // }
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -80,35 +85,35 @@ export const authController = {
         name,
         email,
         password: hashedPassword,
-        verified: false,
+        verified: true,
       });
 
       const token = JwtService.sign({ _id: user._id }, process.env.JWT_SECRET);
 
-      let mailTransporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.USER,
-          pass: process.env.PASS,
-        },
-      });
+      // let mailTransporter = nodemailer.createTransport({
+      //   service: "gmail",
+      //   auth: {
+      //     user: process.env.USER,
+      //     pass: process.env.PASS,
+      //   },
+      // });
 
-      let mailDetails = {
-        to: email,
-        from: process.env.USER,
-        subject: "Verify your account clicking here !",
-        html: `
-        <h1> Welcome to BetterInfos Blog! </h1>
-        <p> We are happy to have you here </p>
-        <a href="http://localhost:5000/auth/activate/${token}"> Click here to verify your email </a>
-      `,
-      };
+      // let mailDetails = {
+      //   to: email,
+      //   from: process.env.USER,
+      //   subject: "Verify your account clicking here !",
+      //   html: `
+      //   <h1> Welcome to BetterInfos Blog! </h1>
+      //   <p> We are happy to have you here </p>
+      //   <a href="http://localhost:5000/auth/activate/${token}"> Click here to verify your email </a>
+      // `,
+      // };
 
-      await mailTransporter.sendMail(mailDetails);
+      // await mailTransporter.sendMail(mailDetails);
 
       return res.status(200).json({
         success: true,
-        message: "Registered Succesfully, Check Your Mail to Verify",
+        message: "Registration Successfull",
       });
     } catch (error) {
       return res.status(500).json({
@@ -137,7 +142,10 @@ export const authController = {
           }
 
           if (existingUser) {
-            res.redirect(302, "https://betterinfos.vercel.app/verification-successfull");
+            res.redirect(
+              302,
+              "https://betterinfos.vercel.app/verification-successfull"
+            );
           }
 
           // res.status(200).json({
