@@ -4,6 +4,7 @@ import fs from "fs";
 import { blogModel } from "../models/blog.model.js";
 import { commentModel } from "../models/comment.model.js";
 import { saveModel } from "../models/save.model.js";
+import { title } from "process";
 
 export const blogController = {
   addBlog: async (req, res, next) => {
@@ -24,7 +25,7 @@ export const blogController = {
     });
 
     if (error) {
-      if(imageFile){
+      if (imageFile) {
         fs.unlink(`${appRoot}/${imageFile?.path}`, (error) => {
           if (error) {
             return next(CustomErrorHandler.serverError(error.message));
@@ -44,31 +45,93 @@ export const blogController = {
         blogImage: fileName,
         description,
       });
-      res.status(200).json({message:"Blog Added Successfully",data:blog});
+      res.status(200).json({ message: "Blog Added Successfully", data: blog });
     } catch (error) {
       return next(error);
     }
   },
 
+  // getBlogs: async (req, res, next) => {
+  //   const page = req.query.page;
+  //   const query = req.query.q;
+  //   const category = req.query.category;
+  //   const perPage = 9;
+  //   const totalPosts = await blogModel.countDocuments();
+  //   const totalPages = Math.ceil(totalPosts / perPage);
+  //   if (page > totalPages) {
+  //     return res.status(404).json({ message: "Page not found" });
+  //   }
+  //   try {
+  //     if (query === "" && category === "") {
+  //       const blogs = await blogModel
+  //         .find({})
+  //         .populate("userId", "name profileImage")
+  //         .skip((page - 1) * perPage)
+  //         .limit(perPage)
+  //         .exec();
+  //       return res.status(200).json({ blogs: blogs, totalPages });
+  //     } else if (category !== "" && query === "") {
+  //       const blogs = await blogModel
+  //         .find({ category: category })
+  //         .populate("userId", "name profileImage")
+  //         .skip((page - 1) * perPage)
+  //         .limit(perPage)
+  //         .exec();
+  //       return res.status(200).json({ blogs: blogs, totalPages });
+  //     } else if (category === "" && query !== "") {
+  //       const blogs = await blogModel
+  //         .find({ title: { $regex: new RegExp(query, "i") } })
+  //         .populate("userId", "name profileImage")
+  //         .skip((page - 1) * perPage)
+  //         .limit(perPage)
+  //         .exec();
+  //       return res.status(200).json({ blogs: blogs, totalPages });
+  //     } else {
+  //       const blogs = await blogModel
+  //         .find({
+  //           title: { $regex: new RegExp(query, "i") },
+  //           category: category,
+  //         })
+  //         .populate("userId", "name profileImage")
+  //         .skip((page - 1) * perPage)
+  //         .limit(perPage)
+  //         .exec();
+  //       return res.status(200).json({ blogs: blogs, totalPages });
+  //     }
+  //   } catch (error) {
+  //     return next(error);
+  //   }
+  // },
+
   getBlogs: async (req, res, next) => {
-    const page = req.query.page;
+    const { page = 1, q = "", category = "" } = req.query; 
     const perPage = 9;
-    const totalPosts = await blogModel.countDocuments();
-    const totalPages = Math.ceil(totalPosts / perPage);
-    if (page > totalPages) {
-      return res.status(404).json({ message: "Page not found" });
-    }
+  
     try {
+      const query = {};
+      if (q) query.title = { $regex: new RegExp(q, "i") };
+      if (category) query.category = category;
+  
+      const totalPosts = await blogModel.countDocuments(query);
+      const totalPages = Math.ceil(totalPosts / perPage);
+  
+      if (page > totalPages) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+  
       const blogs = await blogModel
-        .find({}).populate('userId','name profileImage')
+        .find(query)
+        .populate("userId", "name profileImage")
         .skip((page - 1) * perPage)
         .limit(perPage)
         .exec();
-      return res.status(200).json({ blogs: blogs });
+  
+      return res.status(200).json({ blogs, totalPages });
     } catch (error) {
       return next(error);
     }
   },
+  
 
   getUserBlogs: async (req, res, next) => {
     const { userId } = req.body;
@@ -86,7 +149,7 @@ export const blogController = {
 
   deleteBlog: async (req, res, next) => {
     const { blogId } = req.body;
-    console.log(req.body)
+    console.log(req.body);
     try {
       if (blogId) {
         const blog = await blogModel.findOneAndDelete({ _id: blogId });
@@ -106,7 +169,7 @@ export const blogController = {
     const imageFile = req.files?.blogImage?.[0];
     const fileName = imageFile?.filename;
 
-    console.log(blogId)
+    console.log(blogId);
 
     try {
       if (blogId) {
